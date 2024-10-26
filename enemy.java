@@ -1,6 +1,7 @@
 import java.awt.Graphics2D;
+import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
-
+import java.util.Random;
 public class enemy {
     
     String origin;
@@ -11,14 +12,27 @@ public class enemy {
     texture tex;
     int travelDistance;
     boolean isInsideGrid;
+    boolean isAlive;
+    int drawingOffestX;
+    int drawingOffestY;
+    Random rand;
+    Rectangle bounds;
+    Animation animation;
 
     public enemy( int coordX, int coordY, int type){
+
+        rand = new Random();
         travelDistance = 0;
         tex = new texture();
         this.coordX = coordX;
         this.coordY = coordY;
         isInsideGrid = false;
-
+        this.hitpoints = 50;
+        this.isAlive = true;
+        drawingOffestX = rand.nextInt(-5,5);
+        tex.initTexture();
+        drawingOffestY = rand.nextInt(-5,5);
+        animation= new Animation(5, tex.enemyTypeFast[0], tex.enemyTypeFast[1], tex.enemyTypeFast[2], tex.enemyTypeFast[1], tex.enemyTypeFast[0], tex.enemyTypeFast[3], tex.enemyTypeFast[4], tex.enemyTypeFast[3]);
         switch (type) {
             case 1:
                 speed =1;
@@ -43,31 +57,19 @@ public class enemy {
 
     public void takeDamage(int damage){
         hitpoints -= damage;
-        if(hitpoints <= 0){
-            //remove enemy
-
+        if(hitpoints<=0){
+            isAlive=false;
         }
     }
 
-    public boolean isDead() {
-        return hitpoints <= 0;
-    }
-
-    public void removeDeadEnemies() {
-    
-       // remove(enemy::isDead);
-    }
-
     void render(Graphics2D g2d){
-
-
-        g2d.drawImage(tex.getTexture("end"), coordX, coordY, null);
+        //g2d.drawImage(tex.enemyTypeFast[2], coordX+drawingOffestX, coordY+drawingOffestY, null);
+        animation.drawAnimation(g2d, coordX, coordY, drawingOffestX);
 
     }
 
     void update(){
-
-        
+        animation.runAnimation();
     }
 
     public void setCoordX(int coordX) {
@@ -86,11 +88,10 @@ public class enemy {
         return coordY;
     }
     public BufferedImage getTex() {
-        return tex.getTexture("down");
+        return tex.getTexture("enemy");
     }
-    /*  public void removeDeadEnemies() {
-        enemies.removeIf(Enemy::isDead);
-    }*/
+
+
 
 
 

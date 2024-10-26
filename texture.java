@@ -1,23 +1,21 @@
 import java.io.IOException;
 import java.awt.image.BufferedImage;
-import java.awt.Graphics;
-import java.awt.image.BufferedImage;
 import java.io.File;
-import java.io.IOException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.imageio.ImageIO;
-import javax.swing.JPanel;
+
 public class texture {
     
 
-    spriteSheet gameTiles;
+    spriteSheet gameTiles , enemyFast;
     bufferedImageLoader loader;
+    public BufferedImage[] enemyTypeFast = new BufferedImage[32];
     texture (){
 
         loader = new bufferedImageLoader();
         try {
     		gameTiles = new spriteSheet(loader.loadImage("baseSprites.png"));
+            enemyFast = new spriteSheet(loader.loadImage("enemyTypeFastSprites.png"));
+
     		
     	}catch(IOException e) {
     		
@@ -27,7 +25,7 @@ public class texture {
 
     BufferedImage getTexture(String type){
 
-        BufferedImage img = gameTiles.grabImage(2,1,48);
+        BufferedImage img = gameTiles.grabImage(1,2,48);
         switch(type){
 
             case "start":
@@ -51,15 +49,40 @@ public class texture {
                 break;
             case "tower":
             try {                
-                img = ImageIO.read(new File("lolTower.jpg"));
+                img = ImageIO.read(new File("tower.png"));
              } catch (IOException ex) {
-                  // handle exception...
+                  
              }
+             break;
+             case "enemy":
+             try {                
+                img = ImageIO.read(new File("enemy4.png"));
+             } catch (IOException ex) {
+                  
+             }break;
+             case "arrow":
+             try {                
+                img = ImageIO.read(new File("arrow.png"));
+             } catch (IOException ex) {
+                  
+             }break;
             default:
                 break;
         }
         
 
         return img;
+    }
+
+    void initTexture(){
+        int position = 0;
+        for(int i = 1 ; i<5;i++){
+
+            for(int j = 1;j<8;j++){
+
+                enemyTypeFast[position]=enemyFast.grabImage(j,i,48);
+                position++;
+            }
+        }
     }
 }

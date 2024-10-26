@@ -9,9 +9,9 @@ public class spriteSheet {
 		
 	}
 	
-	public BufferedImage grabImage(int row, int col ,int sqruarSize) {
+	public BufferedImage grabImage(int col, int row ,int sqruarSize) {
 		
-		BufferedImage img = image.getSubimage((row * sqruarSize) - sqruarSize, (col * sqruarSize ) - sqruarSize, sqruarSize, sqruarSize);
+		BufferedImage img = image.getSubimage((col * sqruarSize) - sqruarSize, (row * sqruarSize ) - sqruarSize, sqruarSize, sqruarSize);
 		return img;
 	}
 }

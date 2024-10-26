@@ -8,6 +8,10 @@ public class gameWindow extends JPanel implements Runnable{
 
     final int heigth = 12*48;
     final int FPS = 60;
+    int hp = 100;
+    int gold =10;
+    private boolean isGameOverPopupShown = false;
+
 
     sideWindow sidePanel;
     gamePanel gamePanel;
@@ -15,16 +19,13 @@ public class gameWindow extends JPanel implements Runnable{
     Thread mainThread;
     LinkedList<enemy> listOfEnemies;
     public enum STATE{
-
+        //global for the program
         startScreen,
         levelBuilder,
         gamePlay
-
     }
-
-
     public enum GameState{
-
+        //for the actuall game window
         beforeWave,
         inWave,
         paused
@@ -32,11 +33,21 @@ public class gameWindow extends JPanel implements Runnable{
     }
 
     public GameState gameState = GameState.beforeWave;
+    public GameState lastGameState;
     public STATE state = STATE.startScreen;
 
     public STATE getState(){
 
         return state;
+    }
+    public GameState getGameState(){
+
+        return gameState;
+    }
+
+    public void setGameState(GameState gs){
+
+        gameState = gs;
     }
     public gameWindow(){
 
@@ -107,8 +118,27 @@ public class gameWindow extends JPanel implements Runnable{
     public void update(){
 
         sidePanel.update();
-       // if(gameState == GameState.paused)
+        if(gameState != GameState.paused){
             gamePanel.update();
+        }
+            if(hp<=0){
+        
+               if (!isGameOverPopupShown) {
+                showTemporaryPopup("Game Jover! YOU SUCK", 3000);
+                isGameOverPopupShown = true;
+                state = STATE.startScreen;
+               }
+            }
+    }
+
+    public static void showTemporaryPopup(String message, int duration) {
+        JOptionPane pane = new JOptionPane(message, JOptionPane.INFORMATION_MESSAGE);
+        JDialog dialog = pane.createDialog("Attention!");
+        
+        // Set the dialog to close automatically after the specified duration
+        new Timer(duration, e -> dialog.dispose()).start();
+        dialog.setVisible(true); // Show the dialog
+        
     }
 
     public void paintComponent(Graphics g){

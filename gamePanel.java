@@ -1,9 +1,9 @@
 import javax.swing.*;
 import java.awt.*;
-import java.lang.*;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.Random;
+import java.io.FileWriter;
 
 public class gamePanel extends JPanel {
 
@@ -33,6 +33,7 @@ public class gamePanel extends JPanel {
     int moveX = 0;
     int moveY = 0;
     int distanceTraveled = 0;
+    boolean hasGottenGold = true;
     Random rand = new Random();
 
     public gamePanel(gameWindow gameInstance) {
@@ -41,12 +42,6 @@ public class gamePanel extends JPanel {
         listOfEnemies = new LinkedList<enemy>();
         listOfTowers = new LinkedList<tower>();
         waveLenght = rand.nextInt(15, 25);
-        listOfTowers.add(new tower(5, 5, 1, squareSize));
-
-        // wave creations
-        //
-        // list of all enemies
-
         ms = new mouseInput();
         this.setPreferredSize(new Dimension(width, heigth));
         this.setBackground(Color.gray);
@@ -60,13 +55,14 @@ public class gamePanel extends JPanel {
         pathLenght = 0;
         instrutions = new ArrayList<String>();
         path = new ArrayList<int[]>();
+        
     }
 
     void fillEnemies() {
         System.out.println((int) startPoint.getX());
         for (int i = 0; i < waveLenght; i++) {
 
-            int typeOfEnemy = rand.nextInt(5);
+            int typeOfEnemy = 1;
             enemy newEnemy = new enemy(-200, -200, typeOfEnemy);
             switch ((int) startPoint.getX()) {
                 case 0:
@@ -115,7 +111,12 @@ public class gamePanel extends JPanel {
 
         instrutions.clear();
         listOfEnemies.clear();
-        checkGrid();
+        if(checkGrid()){
+            gameInstance.state=gameWindow.STATE.gamePlay;
+        }else{
+            gameInstance.state=gameWindow.STATE.levelBuilder;
+        }
+        
     }
     public void update() {
 
@@ -166,73 +167,142 @@ public class gamePanel extends JPanel {
                 }
                 break;
             case gamePlay:
-
-                if (listOfEnemies.size() == 0 && wave < 5) {
-                    wave++;
-                    fillEnemies();
-                }
-                brush = null;
-
-                for (enemy e : listOfEnemies) {
-
-                    if (!e.isInsideGrid) {
-                        switch ((int) startPoint.getX()) {
-                            case 0:
-                                // go right
-                                e.setCoordX(e.getCoordX() + e.speed);
-                                break;
-                            case 15:
-                                // go left
-
-                                e.setCoordX(e.getCoordX() - e.speed);
-                                break;
-
-                            default:
-                                // go up or down
-                                switch ((int) startPoint.getY()) {
-                                    case 0:
-                                        // go down
-
-                                        e.setCoordY(e.getCoordY() + e.speed);
-                                        break;
-
-                                    case 11:
-                                        // go up
-                                        e.setCoordY(e.getCoordY() - e.speed);
-                                        break;
-                                }
-                                break;
-                        }
-                    e.checkIfInside(width,heigth,squareSize);                        
-                    } else {
-
-                        if (e.travelDistance / squareSize <= pathLenght) {
-                            String currPosition = instrutions.get(e.travelDistance / squareSize);
-                            switch (currPosition) {
-                                case "down":
-                                    e.setCoordY(e.getCoordY() + e.speed);
-                                    break;
-
-                                case "up":
-                                    e.setCoordY(e.getCoordY() - e.speed);
-                                    break;
-                                case "left":
-                                    e.setCoordX(e.getCoordX() - e.speed);
-                                    break;
-                                case "right":
+                
+                if(gameInstance.gameState==gameWindow.GameState.inWave){
+                    //towers look for enemies
+                    hasGottenGold=false;
+                    if(listOfEnemies.size()==0){
+                        fillEnemies();
+                    }
+                    for (int i = 0 ; i< listOfEnemies.size();i++) {
+                        enemy e = listOfEnemies.get(i);  
+                        e.update();
+                        if (!e.isInsideGrid) {
+                            switch ((int) startPoint.getX()) {
+                                case 0:
+                                    // go right
                                     e.setCoordX(e.getCoordX() + e.speed);
                                     break;
+                                case 15:
+                                    // go left
+    
+                                    e.setCoordX(e.getCoordX() - e.speed);
+                                    break;
+    
                                 default:
+                                    // go up or down
+                                    switch ((int) startPoint.getY()) {
+                                        case 0:
+                                            // go down
+    
+                                            e.setCoordY(e.getCoordY() + e.speed);
+                                            break;
+    
+                                        case 11:
+                                            // go up
+                                            e.setCoordY(e.getCoordY() - e.speed);
+                                            break;
+                                    }
                                     break;
                             }
-                            e.travelDistance+=e.speed;
+                        e.checkIfInside(width,heigth,squareSize);                        
+                        } else {
+    
+                            if (e.travelDistance / squareSize <= pathLenght+1) {
+                                String currPosition = instrutions.get(e.travelDistance / squareSize);
+                                switch (currPosition) {
+                                    case "down":
+                                        e.setCoordY(e.getCoordY() + e.speed);
+                                        break;
+    
+                                    case "up":
+                                        e.setCoordY(e.getCoordY() - e.speed);
+                                        break;
+                                    case "left":
+                                        e.setCoordX(e.getCoordX() - e.speed);
+                                        break;
+                                    case "right":
+                                        e.setCoordX(e.getCoordX() + e.speed);
+                                        break;
+                                    case "end":
+                                        listOfEnemies.remove(i);
+                                        gameInstance.hp-=100;
+                                        break;
+                                    default:
+                                        break;
+                                }
+                                e.travelDistance+=e.speed;
+                            }
+    
                         }
-
+                        if(e.isAlive == false ){
+                            listOfEnemies.remove(i);
+                        }
                     }
+                    for(tower t:listOfTowers){
+                        t.checkInRange(listOfEnemies);
+                    }
+                    
                 }
-                for(tower t:listOfTowers){
-                    t.checkInRange(listOfEnemies);
-                }    
+                if (listOfEnemies.size() == 0 ) {
+                    for(tower t:listOfTowers){
+                        t.clearProjectiles();
+                    }
+                    gameInstance.gameState=gameWindow.GameState.beforeWave;
+                    if(!hasGottenGold){
+                        hasGottenGold=true;
+                        gameInstance.gold+=10;
+                    }
+                    
+                }
+                //build towers
+                if (ms.clicked) {
+                    int[] coords = ms.getCoordinates();
+
+                    if(brush!=null && grid.grid[coords[0] / squareSize][coords[1] / squareSize]==null){
+                       
+                        if(gameInstance.gold-3<0){
+                            gameInstance.lastGameState=gameInstance.gameState;
+                            gameInstance.gameState=gameWindow.GameState.paused;
+                            JOptionPane.showMessageDialog(null,"YOU ARE POOR");
+                            gameInstance.gameState=gameInstance.lastGameState;
+
+                        }else{
+                            grid.grid[coords[0] / squareSize][coords[1] / squareSize]=brush;
+                            tower newTower = new tower(coords[0] / squareSize,coords[1] / squareSize, 1, squareSize,this);
+                            listOfTowers.add(newTower);
+                            gameInstance.gold-=newTower.getCost();
+
+                        }
+                        brush =null;
+                        
+
+                    }else{
+                        System.out.println("IM IN ELSE");
+                        if(grid.grid[coords[0] / squareSize][coords[1] / squareSize] == "tower"){
+                                System.out.println("I CLIEKED OT ZE TOWERS");
+                            //open tower UI in the sideWindow
+                            for(tower t :listOfTowers){
+
+                                if(t.getTowerCoordX()/squareSize==coords[0] / squareSize && t.getTowerCoordY()/squareSize==coords[1] / squareSize){
+                                    gameInstance.sidePanel.showTowerUI(t);
+                                }
+                            }
+                           
+                        }
+                        if(grid.grid[coords[0] / squareSize][coords[1] / squareSize] != "tower"){
+    
+                            //open tower UI in the sideWindow
+                           gameInstance.sidePanel.hideTowerUI();
+                        }
+                    }
+                    
+
+                    ms.resetClick();
+                }
+            
+            
+            
             default:
                 break;
         }
@@ -240,8 +310,18 @@ public class gamePanel extends JPanel {
         // System.out.println(pathLenght);
     }
 
-    public void checkGrid() {
+    public boolean checkGrid() {
+        if(pathLenght<20){
+
+            JOptionPane.showMessageDialog(null,"Path too small!\n minimum path length should be atleast 20 blocks \n current lenght: " + pathLenght);
+        }
+        else if(grid.grid[(int) startPoint.getX()][(int) startPoint.getY()]==null ||grid.grid[(int) endPoint.getX()][(int)endPoint.getY()]==null){
+
+            JOptionPane.showMessageDialog(null,"Missing start or/and end");
+        }else{
+        try{
         instrutions = new ArrayList<String>();
+        
         switch ((int) startPoint.getX()) {
             case 0:
                 // go right
@@ -279,7 +359,7 @@ public class gamePanel extends JPanel {
         String previousTile = "start";
 
         String currTile = instrutions.get(0);
-        for (int i = 0; i < pathLenght + 1; i++) {
+        for (int i = 0; i < pathLenght; i++) {
 
             currTile = instrutions.get(i);
             // System.out.println(currTile);
@@ -343,6 +423,20 @@ public class gamePanel extends JPanel {
             }
         }
         System.out.println(instrutions);
+        return true;
+        
+        }catch(IndexOutOfBoundsException e){
+            JOptionPane.showMessageDialog(null, "Contradicting pathing");
+
+            
+
+        }catch(NullPointerException e){
+            JOptionPane.showMessageDialog(null, "Incorrect pathing \n (Note first block after start should always follow the direction of the start)");
+            
+        }
+
+        }
+        return false;
 
     }
 
@@ -376,11 +470,24 @@ public class gamePanel extends JPanel {
 
             for(tower t :listOfTowers){
                 t.render(g2d);
+
             }
+
+            
         }
     }
 
     public static void setBrush(String newBrush) {
         brush = newBrush;
     }
+
+    public void saveLevel() {
+        //write the grid into JSON file
+        if(checkGrid()){
+
+
+        }
+    }
+
+
 }
